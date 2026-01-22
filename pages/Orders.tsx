@@ -492,6 +492,7 @@ const sidebarItems = [
 export const Orders = () => {
   const navigate = useNavigate();
   const { isSeniorMode, toggleSeniorMode } = useSeniorMode();
+  const { orders, orderHistory, cancelOrder } = useOrders();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('reservations');
 
