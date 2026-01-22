@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Calendar, Clock, MapPin, ExternalLink, Search, Bell,
   Package, History, FileText, Settings, User, QrCode,
   Truck, CheckCircle, Timer, Building2, X, Trash2, AlertCircle,
   Plus, Pill, UserCog, Shield, Phone, ArrowLeft, Home,
-  Camera, PhoneCall, Info
+  Camera, PhoneCall, Info, Navigation, Upload
 } from 'lucide-react';
 
 // Types
@@ -232,7 +232,7 @@ const CancelModal = ({ isOpen, onClose, onConfirm, orderName }: { isOpen: boolea
 };
 
 // Senior-friendly Update Card (from reference image)
-const UpdateCard = ({ order, onShowPickup }: { order: Order; onShowPickup: () => void }) => {
+const UpdateCard = ({ order, onShowPickup, onTrack }: { order: Order; onShowPickup: () => void; onTrack: () => void }) => {
   const isReady = order.status === 'ready' || order.status === 'reserved';
   const isDelivery = order.status === 'delivery';
 
@@ -267,15 +267,24 @@ const UpdateCard = ({ order, onShowPickup }: { order: Order; onShowPickup: () =>
         </div>
       )}
 
-      {isReady && (
+      <div className="mt-4 flex gap-2">
+        {isReady && (
+          <button
+            onClick={onShowPickup}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+          >
+            <QrCode size={20} />
+            SHOW PICKUP CODE
+          </button>
+        )}
         <button
-          onClick={onShowPickup}
-          className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+          onClick={onTrack}
+          className={`${isReady ? 'flex-1' : 'w-full'} ${isDelivery ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-600 hover:bg-slate-700'} text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors`}
         >
-          <QrCode size={20} />
-          SHOW PICKUP CODE
+          <Truck size={20} />
+          TRACK ORDER
         </button>
-      )}
+      </div>
     </div>
   );
 };
@@ -570,12 +579,19 @@ const sidebarItems = [
 ];
 
 export const Orders = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('reservations');
   const [orders, setOrders] = useState(DEMO_ORDERS);
   const [orderHistory, setOrderHistory] = useState(DEMO_ORDER_HISTORY);
   const [showPickupModal, setShowPickupModal] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'senior' | 'full'>('senior');
+  const [showTrackOrder, setShowTrackOrder] = useState<Order | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [trackOrderId, setTrackOrderId] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const updatesRef = useRef<HTMLDivElement>(null);
 
   // Cancel order handler
   const handleCancelOrder = (orderId: string) => {
@@ -649,6 +665,7 @@ export const Orders = () => {
                     key={order.id}
                     order={order}
                     onShowPickup={() => setShowPickupModal(order.id)}
+                    onTrack={() => setShowTrackOrder(order)}
                   />
                 ))}
               </div>
@@ -663,34 +680,53 @@ export const Orders = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <ActionButton
-                icon={Search}
-                title="FIND MEDICINE"
-                subtitle="Search for new pills"
-                color="blue"
-                to="/products"
-              />
-              <ActionButton
-                icon={Pill}
-                title="MY PILLS"
-                subtitle="See your orders"
-                color="yellow"
-                to="#"
-              />
-              <ActionButton
-                icon={Camera}
-                title="UPLOAD PHOTO"
-                subtitle="Send prescription picture"
-                color="pink"
-                to="#"
-              />
-              <ActionButton
-                icon={PhoneCall}
-                title="HELP"
-                subtitle="Call support"
-                color="red"
-                to="#"
-              />
+              {/* Find Medicine - navigates to products */}
+              <button
+                onClick={() => navigate('/products')}
+                className="block rounded-xl border-2 p-6 text-center hover:shadow-lg transition-all bg-blue-100 border-blue-300"
+              >
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-blue-500 text-white">
+                  <Search size={28} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">FIND MEDICINE</h3>
+                <p className="text-sm text-slate-500 mt-1">Search for new pills</p>
+              </button>
+
+              {/* My Pills - scrolls to updates section */}
+              <button
+                onClick={() => updatesRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                className="block rounded-xl border-2 p-6 text-center hover:shadow-lg transition-all bg-yellow-100 border-yellow-300"
+              >
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-yellow-400 text-slate-900">
+                  <Pill size={28} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">MY PILLS</h3>
+                <p className="text-sm text-slate-500 mt-1">See your orders</p>
+              </button>
+
+              {/* Upload Photo - opens file picker */}
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="block rounded-xl border-2 p-6 text-center hover:shadow-lg transition-all bg-pink-100 border-pink-300"
+              >
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-purple-500 text-white">
+                  <Camera size={28} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">UPLOAD PHOTO</h3>
+                <p className="text-sm text-slate-500 mt-1">Send prescription picture</p>
+              </button>
+
+              {/* Help - opens phone call */}
+              <a
+                href="tel:18001234567"
+                className="block rounded-xl border-2 p-6 text-center hover:shadow-lg transition-all bg-red-100 border-red-300"
+              >
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-red-500 text-white">
+                  <PhoneCall size={28} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">HELP</h3>
+                <p className="text-sm text-slate-500 mt-1">Call support</p>
+              </a>
             </div>
           </section>
 
@@ -737,6 +773,164 @@ export const Orders = () => {
                 <p className="text-slate-500 mb-6">Show this code at the pharmacy</p>
                 <button
                   onClick={() => setShowPickupModal(null)}
+                  className="w-full bg-slate-900 text-white py-3 rounded-lg font-bold"
+                >
+                  CLOSE
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Upload Prescription Modal */}
+        <AnimatePresence>
+          {showUploadModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowUploadModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+                className="bg-white rounded-2xl p-8 max-w-md w-full"
+                onClick={e => e.stopPropagation()}
+              >
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">UPLOAD PRESCRIPTION</h3>
+                <p className="text-slate-500 mb-6">Take a photo or upload your prescription</p>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setUploadedFile(e.target.files[0]);
+                    }
+                  }}
+                />
+
+                {uploadedFile ? (
+                  <div className="mb-6">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+                      <CheckCircle size={24} className="text-green-500" />
+                      <div>
+                        <p className="font-medium text-green-800">File Uploaded!</p>
+                        <p className="text-sm text-green-600">{uploadedFile.name}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setUploadedFile(null);
+                        setShowUploadModal(false);
+                        alert('Prescription uploaded! A pharmacist will contact you shortly.');
+                      }}
+                      className="w-full mt-4 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold transition-colors"
+                    >
+                      SUBMIT PRESCRIPTION
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4 mb-6">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-slate-300 rounded-xl py-8 flex flex-col items-center gap-3 hover:border-blue-400 transition-colors"
+                    >
+                      <Camera size={40} className="text-slate-400" />
+                      <span className="font-medium text-slate-600">Click to select image</span>
+                    </button>
+                  </div>
+                )}
+
+                <p className="text-xs text-slate-400 text-center mb-4">
+                  Send your prescription to: medifind74@gmail.com
+                </p>
+
+                <button
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setUploadedFile(null);
+                  }}
+                  className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold"
+                >
+                  CANCEL
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Track Order Modal */}
+        <AnimatePresence>
+          {showTrackOrder && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowTrackOrder(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+                className="bg-white rounded-2xl p-8 max-w-md w-full"
+                onClick={e => e.stopPropagation()}
+              >
+                <h3 className="text-2xl font-bold text-slate-900 mb-4">TRACK ORDER</h3>
+
+                <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-slate-500">Order ID</span>
+                    <span className="font-mono font-bold text-slate-900">{showTrackOrder.id}</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-slate-500">Medicine</span>
+                    <span className="font-medium text-slate-900">{showTrackOrder.medicineName}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Status</span>
+                    <StatusBadge status={showTrackOrder.status} />
+                  </div>
+                </div>
+
+                {/* Tracking Progress */}
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">
+                      <CheckCircle size={16} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">Order Placed</p>
+                      <p className="text-xs text-slate-500">Your order has been confirmed</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${showTrackOrder.status !== 'reserved' ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                      {showTrackOrder.status !== 'reserved' ? <CheckCircle size={16} /> : <Package size={16} />}
+                    </div>
+                    <div>
+                      <p className={`font-medium ${showTrackOrder.status !== 'reserved' ? 'text-slate-900' : 'text-slate-400'}`}>Ready for Pickup</p>
+                      <p className="text-xs text-slate-500">Pharmacy has confirmed availability</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${showTrackOrder.status === 'delivery' ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                      <Truck size={16} />
+                    </div>
+                    <div>
+                      <p className={`font-medium ${showTrackOrder.status === 'delivery' ? 'text-slate-900' : 'text-slate-400'}`}>Out for Delivery</p>
+                      <p className="text-xs text-slate-500">{showTrackOrder.estimatedArrival ? `Arrives by ${showTrackOrder.estimatedArrival}` : 'Waiting for dispatch'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowTrackOrder(null)}
                   className="w-full bg-slate-900 text-white py-3 rounded-lg font-bold"
                 >
                   CLOSE
@@ -859,8 +1053,8 @@ export const Orders = () => {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-1 ${activeTab === item.id
-                  ? 'bg-teal-50 text-teal-700'
-                  : 'text-slate-600 hover:bg-slate-50'
+                ? 'bg-teal-50 text-teal-700'
+                : 'text-slate-600 hover:bg-slate-50'
                 }`}
             >
               <item.icon size={18} />
