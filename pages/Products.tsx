@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MEDICINES, CATEGORIES } from '../constants';
@@ -32,25 +32,28 @@ export const Products = () => {
   };
 
   // Filter medicines based on search query, category, and prescription status
-  const filteredMedicines = MEDICINES.filter((medicine) => {
-    // Search filter - matches name, brand, category, or pharmacy
+  const filteredMedicines = useMemo(() => {
     const searchLower = searchQuery.toLowerCase().trim();
-    const matchesSearch = searchLower === '' ||
-      medicine.name.toLowerCase().includes(searchLower) ||
-      medicine.brand.toLowerCase().includes(searchLower) ||
-      medicine.category.toLowerCase().includes(searchLower) ||
-      medicine.pharmacyName.toLowerCase().includes(searchLower);
 
-    // Category filter
-    const matchesCategory = activeCategory === 'All' || medicine.category === activeCategory;
+    return MEDICINES.filter((medicine) => {
+      // Search filter - matches name, brand, category, or pharmacy
+      const matchesSearch = searchLower === '' ||
+        medicine.name.toLowerCase().includes(searchLower) ||
+        medicine.brand.toLowerCase().includes(searchLower) ||
+        medicine.category.toLowerCase().includes(searchLower) ||
+        medicine.pharmacyName.toLowerCase().includes(searchLower);
 
-    // Prescription filter
-    let matchesPrescription = true;
-    if (prescriptionFilter === 'yes') matchesPrescription = medicine.isPrescriptionRequired;
-    if (prescriptionFilter === 'no') matchesPrescription = !medicine.isPrescriptionRequired;
+      // Category filter
+      const matchesCategory = activeCategory === 'All' || medicine.category === activeCategory;
 
-    return matchesSearch && matchesCategory && matchesPrescription;
-  });
+      // Prescription filter
+      let matchesPrescription = true;
+      if (prescriptionFilter === 'yes') matchesPrescription = medicine.isPrescriptionRequired;
+      if (prescriptionFilter === 'no') matchesPrescription = !medicine.isPrescriptionRequired;
+
+      return matchesSearch && matchesCategory && matchesPrescription;
+    });
+  }, [searchQuery, activeCategory, prescriptionFilter]);
 
   const getFilterLabel = () => {
     if (prescriptionFilter === 'yes') return 'Prescription Required';
