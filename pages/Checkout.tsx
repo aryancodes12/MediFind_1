@@ -2,13 +2,19 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Banknote, Truck, CheckCircle } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 export const Checkout = () => {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState('upi');
+  const { cartTotal, cartCount, items, clearCart } = useCart();
+
+  const deliveryFee = items.length > 0 ? 40 : 0;
+  const finalTotal = cartTotal + deliveryFee;
 
   const handlePlaceOrder = () => {
     // Simulate order placement
+    clearCart();
     navigate('/orders');
   };
 
@@ -23,9 +29,9 @@ export const Checkout = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            
+
             {/* Address Section */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"
@@ -34,17 +40,17 @@ export const Checkout = () => {
                 <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">1</div>
                 Delivery Address
               </h2>
-              
+
               <div className="space-y-4">
                 <div className="border border-primary-200 bg-primary-50 rounded-xl p-4 relative cursor-pointer ring-1 ring-primary-500">
-                   <div className="absolute top-4 right-4 text-primary-600"><CheckCircle size={20} fill="currentColor" className="text-white" /></div>
-                   <h3 className="font-bold text-slate-900 mb-1">Home</h3>
-                   <p className="text-slate-600 text-sm leading-relaxed">
-                     Flat 402, Krishna Heights, JP Road<br/>
-                     Near Bhavan's College, Andheri West<br/>
-                     Mumbai, 400058
-                   </p>
-                   <p className="text-slate-600 text-sm mt-2 font-medium">Phone: +91 98765 43210</p>
+                  <div className="absolute top-4 right-4 text-primary-600"><CheckCircle size={20} fill="currentColor" className="text-white" /></div>
+                  <h3 className="font-bold text-slate-900 mb-1">Home</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">
+                    Flat 402, Krishna Heights, JP Road<br />
+                    Near Bhavan's College, Andheri West<br />
+                    Mumbai, 400058
+                  </p>
+                  <p className="text-slate-600 text-sm mt-2 font-medium">Phone: +91 98765 43210</p>
                 </div>
 
                 <button className="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 font-medium hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50 transition-all">
@@ -54,7 +60,7 @@ export const Checkout = () => {
             </motion.div>
 
             {/* Payment Section */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -64,9 +70,9 @@ export const Checkout = () => {
                 <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">2</div>
                 Payment Method
               </h2>
-              
+
               <div className="space-y-3">
-                <div 
+                <div
                   onClick={() => setPaymentMethod('upi')}
                   className={`p-4 rounded-xl border flex items-center gap-4 cursor-pointer transition-all ${paymentMethod === 'upi' ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-slate-200 hover:border-slate-300'}`}
                 >
@@ -82,7 +88,7 @@ export const Checkout = () => {
                   </div>
                 </div>
 
-                <div 
+                <div
                   onClick={() => setPaymentMethod('card')}
                   className={`p-4 rounded-xl border flex items-center gap-4 cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-slate-200 hover:border-slate-300'}`}
                 >
@@ -98,7 +104,7 @@ export const Checkout = () => {
                   </div>
                 </div>
 
-                <div 
+                <div
                   onClick={() => setPaymentMethod('cod')}
                   className={`p-4 rounded-xl border flex items-center gap-4 cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-slate-200 hover:border-slate-300'}`}
                 >
@@ -123,20 +129,20 @@ export const Checkout = () => {
               <h3 className="font-bold text-slate-900 mb-4">Price Details</h3>
               <div className="space-y-3 text-sm mb-6 pb-6 border-b border-slate-100">
                 <div className="flex justify-between text-slate-600">
-                  <span>Items (3)</span>
-                  <span>₹190</span>
+                  <span>Items ({cartCount})</span>
+                  <span>₹{cartTotal}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Delivery Charges</span>
-                  <span>₹40</span>
+                  <span>₹{deliveryFee}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center mb-6">
                 <span className="font-bold text-slate-900 text-lg">Total Pay</span>
-                <span className="font-bold text-slate-900 text-2xl">₹230</span>
+                <span className="font-bold text-slate-900 text-2xl">₹{finalTotal}</span>
               </div>
-              
-              <button 
+
+              <button
                 onClick={handlePlaceOrder}
                 className="w-full bg-primary-600 text-white py-4 rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2"
               >

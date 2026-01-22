@@ -18,9 +18,18 @@ const SeniorModeContext = createContext<SeniorModeContextType>({
 export const useSeniorMode = () => useContext(SeniorModeContext);
 
 export const SeniorModeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isSeniorMode, setIsSeniorMode] = useState(true); // Default to senior mode
+  const [isSeniorMode, setIsSeniorMode] = useState(() => {
+    const saved = localStorage.getItem('medifind_senior_mode');
+    return saved !== null ? JSON.parse(saved) : true; // Default to true if not set
+  });
 
-  const toggleSeniorMode = () => setIsSeniorMode(prev => !prev);
+  const toggleSeniorMode = () => {
+    setIsSeniorMode((prev: boolean) => {
+      const newValue = !prev;
+      localStorage.setItem('medifind_senior_mode', JSON.stringify(newValue));
+      return newValue;
+    });
+  };
 
   return (
     <SeniorModeContext.Provider value={{ isSeniorMode, toggleSeniorMode }}>
@@ -55,7 +64,7 @@ const Header = () => {
   ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-sm py-2' : 'bg-white py-3'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-sm' : 'bg-white'} py-3`}>
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex justify-between items-center">
           {/* Logo */}
@@ -92,14 +101,21 @@ const Header = () => {
             <button
               onClick={toggleSeniorMode}
               className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all border ${isSeniorMode
-                  ? 'bg-green-100 text-green-700 border-green-300'
-                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                ? 'bg-green-100 text-green-700 border-green-300'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
                 }`}
               title={isSeniorMode ? 'Switch to Normal View' : 'Switch to Senior View'}
+              aria-label={isSeniorMode ? 'Senior mode enabled - click to switch to normal view' : 'Click to switch to senior view for larger text and simpler navigation'}
+              aria-pressed={isSeniorMode}
+              role="switch"
+              aria-checked={isSeniorMode}
             >
               <Users size={16} />
               <span>{isSeniorMode ? 'Senior Mode' : 'Normal'}</span>
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${isSeniorMode ? 'bg-green-500' : 'bg-slate-300'}`}>
+              <div
+                className={`w-8 h-4 rounded-full relative transition-colors ${isSeniorMode ? 'bg-green-500' : 'bg-slate-300'}`}
+                aria-hidden="true"
+              >
                 <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all ${isSeniorMode ? 'right-0.5' : 'left-0.5'}`}></div>
               </div>
             </button>
@@ -125,16 +141,33 @@ const Header = () => {
 
           {/* Mobile Toggle */}
           <div className="lg:hidden flex items-center gap-2">
+            {/* Mobile Cart */}
+            <NavLink
+              to="/cart"
+              className="relative p-2 text-slate-600 hover:text-blue-600 transition-colors"
+              aria-label={`Shopping cart with ${cartCount} items`}
+            >
+              <ShoppingCart size={20} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                  {cartCount}
+                </span>
+              )}
+            </NavLink>
             {/* Mobile Senior Toggle */}
             <button
               onClick={toggleSeniorMode}
-              className={`p-2 rounded-full ${isSeniorMode ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600'}`}
+              className={`p-2 rounded-full transition-colors ${isSeniorMode ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600'}`}
+              aria-label={isSeniorMode ? 'Senior mode enabled - click to disable' : 'Click to enable senior mode'}
+              aria-pressed={isSeniorMode}
             >
               <Users size={20} />
             </button>
             <button
               className="p-2 text-slate-600"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isOpen}
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -223,8 +256,8 @@ const Footer = () => {
             © 2026 MediFind Inc. All rights reserved.
           </p>
           <div className="flex gap-4 text-sm text-slate-500">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <NavLink to="/about" className="hover:text-white transition-colors">Privacy Policy</NavLink>
+            <NavLink to="/about" className="hover:text-white transition-colors">Terms of Service</NavLink>
           </div>
         </div>
       </div>

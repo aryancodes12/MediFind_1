@@ -10,8 +10,19 @@ interface MedicineCardProps {
 }
 
 export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
-  const [isReserved, setIsReserved] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
+  const [isReserved, setIsReserved] = useState(() => {
+    return localStorage.getItem(`reserved_${medicine.id}`) === 'true';
+  });
+
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const savedExpiry = localStorage.getItem(`expiry_${medicine.id}`);
+    if (savedExpiry) {
+      const remaining = Math.floor((parseInt(savedExpiry) - Date.now()) / 1000);
+      return remaining > 0 ? remaining : 0;
+    }
+    return 3600;
+  });
+
   const { addToCart } = useCart();
   const { isSeniorMode } = useSeniorMode();
   const [isAdded, setIsAdded] = useState(false);
@@ -20,16 +31,31 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
     let timer: number;
     if (isReserved && timeLeft > 0) {
       timer = window.setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setTimeLeft((prev) => {
+          const newValue = prev - 1;
+          if (newValue <= 0) {
+            handleCancelReserve(); // Auto-cancel when time runs out
+          }
+          return newValue;
+        });
       }, 1000);
     }
     return () => clearInterval(timer);
   }, [isReserved, timeLeft]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleReserve = () => {
+    const expiry = Date.now() + 3600 * 1000;
+    localStorage.setItem(`reserved_${medicine.id}`, 'true');
+    localStorage.setItem(`expiry_${medicine.id}`, expiry.toString());
+    setIsReserved(true);
+    setTimeLeft(3600);
+  };
+
+  const handleCancelReserve = () => {
+    localStorage.removeItem(`reserved_${medicine.id}`);
+    localStorage.removeItem(`expiry_${medicine.id}`);
+    setIsReserved(false);
+    setTimeLeft(3600);
   };
 
   const handleAddToCart = () => {
@@ -45,6 +71,13 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
       case 'Out of Stock': return 'text-red-600 bg-red-50 border-red-100';
       default: return 'text-slate-600 bg-slate-50 border-slate-100';
     }
+  };
+
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -118,7 +151,7 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
               className="flex flex-col items-end"
             >
               <button
-                onClick={() => setIsReserved(false)}
+                onClick={handleCancelReserve}
                 className="bg-amber-100 text-amber-700 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 border border-amber-200"
               >
                 <CheckCircle size={16} />
@@ -138,7 +171,7 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
                 {isAdded ? <CheckCircle size={20} /> : (isSeniorMode ? <span className="font-bold">Add</span> : <ShoppingCart size={20} />)}
               </button>
               <button
-                onClick={() => setIsReserved(true)}
+                onClick={handleReserve}
                 className="bg-primary-600 text-white hover:bg-primary-700 border border-transparent px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md"
               >
                 Reserve

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSeniorMode } from '../components/Layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -580,12 +581,19 @@ const sidebarItems = [
 
 export const Orders = () => {
   const navigate = useNavigate();
+  const { isSeniorMode, toggleSeniorMode } = useSeniorMode();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('reservations');
   const [orders, setOrders] = useState(DEMO_ORDERS);
   const [orderHistory, setOrderHistory] = useState(DEMO_ORDER_HISTORY);
   const [showPickupModal, setShowPickupModal] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'senior' | 'full'>('senior');
+  // viewMode is now derived from global context, but we still might want local toggle override?
+  // Actually, let's strictly follow the global mode for "senior" view to avoid confusion.
+  // Or simpler: initialize simple state but probably better to use the computed value.
+
+  // For this fix, let's just use the global isSeniorMode directly instead of local state viewMode
+  // const [viewMode, setViewMode] = useState<'senior' | 'full'>('senior'); 
+
   const [showTrackOrder, setShowTrackOrder] = useState<Order | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -632,25 +640,25 @@ export const Orders = () => {
   };
 
   // Senior-friendly view
-  if (viewMode === 'senior') {
+  if (isSeniorMode) {
     const activeOrders = orders.filter(o => o.status === 'ready' || o.status === 'reserved' || o.status === 'delivery');
 
     return (
       <div className="min-h-screen bg-slate-100">
         {/* Senior Header */}
-        <header className="bg-slate-900 text-white py-4 px-6 flex items-center justify-between sticky top-0 z-50">
-          <NavLink to="/" className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors">
-            <ArrowLeft size={20} />
-            <span className="font-semibold">BACK</span>
-          </NavLink>
-          <h1 className="text-xl font-bold tracking-wide">MEDIFIND</h1>
-          <NavLink to="/" className="flex items-center gap-2 bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-            <span className="font-semibold">HOME</span>
-            <Home size={20} />
-          </NavLink>
-        </header>
-
         <main className="p-6 max-w-4xl mx-auto pb-24">
+          {/* Senior Navigation Bar */}
+          <div className="flex items-center justify-between mb-6 bg-slate-900 text-white p-4 rounded-xl shadow-lg">
+            <NavLink to="/" className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors">
+              <ArrowLeft size={20} />
+              <span className="font-semibold">BACK</span>
+            </NavLink>
+            <h1 className="text-xl font-bold tracking-wide">MEDIFIND</h1>
+            <NavLink to="/" className="flex items-center gap-2 bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              <span className="font-semibold">HOME</span>
+              <Home size={20} />
+            </NavLink>
+          </div>
           {/* Updates Section */}
           {activeOrders.length > 0 && (
             <section className="mb-8">
@@ -732,7 +740,7 @@ export const Orders = () => {
 
           {/* Switch to Full View */}
           <button
-            onClick={() => setViewMode('full')}
+            onClick={toggleSeniorMode}
             className="mt-8 w-full text-center text-slate-500 underline text-sm"
           >
             Switch to detailed view
@@ -1075,7 +1083,7 @@ export const Orders = () => {
             </div>
           </div>
           <button
-            onClick={() => setViewMode('senior')}
+            onClick={toggleSeniorMode}
             className="mt-3 w-full text-xs text-teal-600 underline"
           >
             Switch to simple view
