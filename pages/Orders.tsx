@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -8,31 +8,8 @@ import {
   Plus, Pill, UserCog, Shield, Phone, ArrowLeft, Home,
   Camera, PhoneCall, Info, Navigation, Upload
 } from 'lucide-react';
-
-// Types
-interface Order {
-  id: string;
-  status: 'reserved' | 'ready' | 'delivery' | 'completed' | 'cancelled';
-  medicineName: string;
-  genericName: string;
-  quantity: number;
-  unit: string;
-  pharmacyName: string;
-  pharmacyAddress: string;
-  reservationExpiry?: number;
-  estimatedArrival?: string;
-  image?: string;
-  date?: string;
-}
-
-interface Prescription {
-  id: string;
-  doctorName: string;
-  date: string;
-  medicines: string[];
-  status: 'active' | 'expired';
-  refillsLeft: number;
-}
+import { Order, Prescription } from '../types';
+import { getFilteredOrders } from '../utils/orderUtils';
 
 // Demo data with Indian names
 const DEMO_ORDERS: Order[] = [
@@ -607,29 +584,9 @@ export const Orders = () => {
   };
 
   // Get filtered data based on active tab
-  const getFilteredData = () => {
-    const query = searchQuery.toLowerCase();
-
-    switch (activeTab) {
-      case 'reservations':
-        return orders.filter(o =>
-          o.medicineName.toLowerCase().includes(query) ||
-          o.id.toLowerCase().includes(query)
-        );
-      case 'history':
-        return orderHistory.filter(o =>
-          o.medicineName.toLowerCase().includes(query) ||
-          o.id.toLowerCase().includes(query)
-        );
-      case 'prescriptions':
-        return DEMO_PRESCRIPTIONS.filter(p =>
-          p.doctorName.toLowerCase().includes(query) ||
-          p.medicines.some(m => m.toLowerCase().includes(query))
-        );
-      default:
-        return [];
-    }
-  };
+  const filteredData = useMemo(() => {
+    return getFilteredOrders(activeTab, searchQuery, orders, orderHistory, DEMO_PRESCRIPTIONS);
+  }, [activeTab, searchQuery, orders, orderHistory]);
 
   // Senior-friendly view
   if (viewMode === 'senior') {
@@ -945,8 +902,6 @@ export const Orders = () => {
 
   // Full view (original design)
   const renderContent = () => {
-    const filteredData = getFilteredData();
-
     switch (activeTab) {
       case 'reservations':
         return (
