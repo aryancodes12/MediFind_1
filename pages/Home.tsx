@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, MapPin, ChevronDown, ArrowRight, AlertCircle, Users, FileText, Clock, Building2, HeadphonesIcon, Heart, Timer, CheckCircle } from 'lucide-react';
+import { useSeniorMode } from '../components/Layout';
 
 export const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('Mumbai, Bandra');
   const navigate = useNavigate();
+  const { isSeniorMode } = useSeniorMode();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,7 +147,7 @@ export const Home = () => {
             <p className="text-slate-500">Popular services tailored for your health needs</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className={`grid grid-cols-1 gap-6 ${isSeniorMode ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
             {quickAccessCards.map((card, index) => (
               <motion.div
                 key={card.title}
@@ -176,7 +178,7 @@ export const Home = () => {
       {/* Stats Section */}
       <section className="py-12 bg-white border-t border-slate-100">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className={`grid grid-cols-2 gap-6 ${isSeniorMode ? 'md:grid-cols-2' : 'md:grid-cols-4'}`}>
             {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}

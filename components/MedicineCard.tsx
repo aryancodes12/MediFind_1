@@ -3,6 +3,7 @@ import { Medicine } from '../types';
 import { MapPin, Clock, AlertCircle, CheckCircle, Info, ShoppingCart, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
+import { useSeniorMode } from './Layout';
 
 interface MedicineCardProps {
   medicine: Medicine;
@@ -12,6 +13,7 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
   const [isReserved, setIsReserved] = useState(false);
   const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
   const { addToCart } = useCart();
+  const { isSeniorMode } = useSeniorMode();
   const [isAdded, setIsAdded] = useState(false);
 
   useEffect(() => {
@@ -130,10 +132,10 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
             <div className="flex gap-2">
               <button
                 onClick={handleAddToCart}
-                className={`p-2.5 rounded-lg transition-all duration-300 border ${isAdded ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-700 border-slate-200 hover:border-primary-500 hover:text-primary-600'}`}
+                className={`p-2.5 rounded-lg transition-all duration-300 border ${isAdded ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-700 border-slate-200 hover:border-primary-500 hover:text-primary-600'} ${isSeniorMode ? 'px-4' : ''}`}
                 title="Add to Cart"
               >
-                {isAdded ? <CheckCircle size={20} /> : <ShoppingCart size={20} />}
+                {isAdded ? <CheckCircle size={20} /> : (isSeniorMode ? <span className="font-bold">Add</span> : <ShoppingCart size={20} />)}
               </button>
               <button
                 onClick={() => setIsReserved(true)}

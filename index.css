@@ -1,0 +1,53 @@
+/* Senior Mode Global Overrides */
+.senior-mode {
+  --senior-text-scale: 1.2;
+}
+
+/* Increased base text size for readable content elements.
+   Avoids generic 'div' or 'span' to prevent nesting compound issues. */
+.senior-mode p,
+.senior-mode li,
+.senior-mode a,
+.senior-mode button,
+.senior-mode input,
+.senior-mode label {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75;
+}
+
+.senior-mode h1 {
+  font-size: 3rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+.senior-mode h2 {
+  font-size: 2.25rem !important;
+  font-weight: 700 !important;
+}
+
+.senior-mode h3 {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+}
+
+.senior-mode button {
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+}
+
+/* High contrast borders for inputs in senior mode */
+.senior-mode input,
+.senior-mode select {
+  border-width: 2px !important;
+  border-color: #475569 !important; /* slate-600 */
+}
+
+/* Make buttons easier to click */
+.senior-mode button,
+.senior-mode a.button-like {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

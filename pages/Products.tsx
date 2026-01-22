@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MEDICINES, CATEGORIES } from '../constants';
 import { MedicineCard } from '../components/MedicineCard';
 import { Filter, Search, Check, ChevronDown, X } from 'lucide-react';
+import { useSeniorMode } from '../components/Layout';
 
 export const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isSeniorMode } = useSeniorMode();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [activeCategory, setActiveCategory] = useState('All');
   const [prescriptionFilter, setPrescriptionFilter] = useState<'all' | 'yes' | 'no'>('all');
@@ -205,7 +207,7 @@ export const Products = () => {
           </div>
 
           {filteredMedicines.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className={`grid grid-cols-1 gap-6 ${isSeniorMode ? 'sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
               {filteredMedicines.map((medicine) => (
                 <MedicineCard key={medicine.id} medicine={medicine} />
               ))}

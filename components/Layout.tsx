@@ -232,16 +232,24 @@ const Footer = () => {
   );
 };
 
+const LayoutContent = ({ children }: { children?: React.ReactNode }) => {
+  const { isSeniorMode } = useSeniorMode();
+
+  return (
+    <div className={`min-h-screen flex flex-col font-sans bg-white ${isSeniorMode ? 'senior-mode' : ''}`}>
+      <Header />
+      <main className="flex-grow pt-16">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
 export const Layout = ({ children }: { children?: React.ReactNode }) => {
   return (
     <SeniorModeProvider>
-      <div className="min-h-screen flex flex-col font-sans bg-white">
-        <Header />
-        <main className="flex-grow pt-16">
-          {children}
-        </main>
-        <Footer />
-      </div>
+      <LayoutContent>{children}</LayoutContent>
     </SeniorModeProvider>
   );
 };
