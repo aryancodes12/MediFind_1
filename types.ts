@@ -39,3 +39,26 @@ export interface Testimonial {
   content: string;
   avatar: string;
 }
+export interface Order {
+  id: string;
+  status: 'reserved' | 'ready' | 'delivery' | 'completed' | 'cancelled';
+  medicineName: string;
+  genericName: string;
+  quantity: number;
+  unit: string;
+  pharmacyName: string;
+  pharmacyAddress: string;
+  reservationExpiry?: number;
+  estimatedArrival?: string;
+  image?: string;
+  date?: string;
+}
+
+export interface Prescription {
+  id: string;
+  doctorName: string;
+  date: string;
+  medicines: string[];
+  status: 'active' | 'expired';
+  refillsLeft: number;
+}
