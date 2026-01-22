@@ -13,6 +13,7 @@ import { Checkout } from './pages/Checkout';
 import { Orders } from './pages/Orders';
 import { useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
+import { OrdersProvider } from './context/OrdersContext';
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -25,26 +26,28 @@ const ScrollToTop = () => {
 
 function App() {
   return (
-    <CartProvider>
-      <Router>
-        <ScrollToTop />
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="*" element={<Home />} />
-          </Routes>
-        </Layout>
-      </Router>
-    </CartProvider>
+    <OrdersProvider>
+      <CartProvider>
+        <Router>
+          <ScrollToTop />
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </Layout>
+        </Router>
+      </CartProvider>
+    </OrdersProvider>
   );
 }
 

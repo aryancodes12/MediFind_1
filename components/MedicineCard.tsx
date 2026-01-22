@@ -3,59 +3,47 @@ import { Medicine } from '../types';
 import { MapPin, Clock, AlertCircle, CheckCircle, Info, ShoppingCart, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
-import { useSeniorMode } from './Layout';
+import { useOrders } from '../context/OrdersContext';
 
 interface MedicineCardProps {
   medicine: Medicine;
 }
 
 export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
-  const [isReserved, setIsReserved] = useState(() => {
-    return localStorage.getItem(`reserved_${medicine.id}`) === 'true';
-  });
-
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const savedExpiry = localStorage.getItem(`expiry_${medicine.id}`);
-    if (savedExpiry) {
-      const remaining = Math.floor((parseInt(savedExpiry) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    return 3600;
-  });
-
   const { addToCart } = useCart();
-  const { isSeniorMode } = useSeniorMode();
-  const [isAdded, setIsAdded] = useState(false);
+  const { addOrder, cancelOrder, isMedicineReserved, getReservation } = useOrders();
 
+  const [isAdded, setIsAdded] = useState(false);
+  const isReserved = isMedicineReserved(medicine.id);
+  const reservation = getReservation(medicine.id);
+
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  // Sync timer with reservation expiry
   useEffect(() => {
-    let timer: number;
-    if (isReserved && timeLeft > 0) {
-      timer = window.setInterval(() => {
-        setTimeLeft((prev) => {
-          const newValue = prev - 1;
-          if (newValue <= 0) {
-            handleCancelReserve(); // Auto-cancel when time runs out
-          }
-          return newValue;
-        });
-      }, 1000);
+    if (isReserved && reservation?.reservationExpiry) {
+      const updateTimer = () => {
+        const now = Math.floor(Date.now() / 1000);
+        const remaining = Math.max(0, reservation.reservationExpiry! - now);
+        setTimeLeft(remaining);
+      };
+
+      updateTimer(); // Initial call
+      const timer = setInterval(updateTimer, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setTimeLeft(3600); // Default preview
     }
-    return () => clearInterval(timer);
-  }, [isReserved, timeLeft]);
+  }, [isReserved, reservation]);
 
   const handleReserve = () => {
-    const expiry = Date.now() + 3600 * 1000;
-    localStorage.setItem(`reserved_${medicine.id}`, 'true');
-    localStorage.setItem(`expiry_${medicine.id}`, expiry.toString());
-    setIsReserved(true);
-    setTimeLeft(3600);
+    addOrder([medicine], 'reservation');
   };
 
   const handleCancelReserve = () => {
-    localStorage.removeItem(`reserved_${medicine.id}`);
-    localStorage.removeItem(`expiry_${medicine.id}`);
-    setIsReserved(false);
-    setTimeLeft(3600);
+    if (reservation) {
+      cancelOrder(reservation.id);
+    }
   };
 
   const handleAddToCart = () => {
@@ -165,10 +153,10 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
             <div className="flex gap-2">
               <button
                 onClick={handleAddToCart}
-                className={`p-2.5 rounded-lg transition-all duration-300 border ${isAdded ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-700 border-slate-200 hover:border-primary-500 hover:text-primary-600'} ${isSeniorMode ? 'px-4' : ''}`}
+                className={`p-2.5 rounded-lg transition-all duration-300 border ${isAdded ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-700 border-slate-200 hover:border-primary-500 hover:text-primary-600'}`}
                 title="Add to Cart"
               >
-                {isAdded ? <CheckCircle size={20} /> : (isSeniorMode ? <span className="font-bold">Add</span> : <ShoppingCart size={20} />)}
+                {isAdded ? <CheckCircle size={20} /> : <ShoppingCart size={20} />}
               </button>
               <button
                 onClick={handleReserve}

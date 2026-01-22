@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSeniorMode } from '../components/Layout';
+import { useOrders } from '../context/OrdersContext';
+import { Order, Prescription } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -11,105 +13,7 @@ import {
 } from 'lucide-react';
 
 // Types
-interface Order {
-  id: string;
-  status: 'reserved' | 'ready' | 'delivery' | 'completed' | 'cancelled';
-  medicineName: string;
-  genericName: string;
-  quantity: number;
-  unit: string;
-  pharmacyName: string;
-  pharmacyAddress: string;
-  reservationExpiry?: number;
-  estimatedArrival?: string;
-  image?: string;
-  date?: string;
-}
-
-interface Prescription {
-  id: string;
-  doctorName: string;
-  date: string;
-  medicines: string[];
-  status: 'active' | 'expired';
-  refillsLeft: number;
-}
-
-// Demo data with Indian names
-const DEMO_ORDERS: Order[] = [
-  {
-    id: 'ORD-8821',
-    status: 'reserved',
-    medicineName: 'Metformin 500mg',
-    genericName: 'Glycomet',
-    quantity: 30,
-    unit: 'Tablets',
-    pharmacyName: 'Apollo Pharmacy, Andheri West',
-    pharmacyAddress: 'Shop 4, Lokhandwala Complex, Mumbai',
-    reservationExpiry: 45 * 60,
-    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&h=100&fit=crop'
-  },
-  {
-    id: 'ORD-9932',
-    status: 'ready',
-    medicineName: 'Telmisartan 40mg',
-    genericName: 'Telma',
-    quantity: 30,
-    unit: 'Tablets',
-    pharmacyName: 'Noble Chemists, Bandra',
-    pharmacyAddress: 'Hill Road, Bandra West, Mumbai',
-    image: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=100&h=100&fit=crop'
-  },
-  {
-    id: 'DEL-4421',
-    status: 'delivery',
-    medicineName: 'Lisinopril 10mg',
-    genericName: 'Listril',
-    quantity: 30,
-    unit: 'Tablets',
-    pharmacyName: 'MedPlus, Juhu',
-    pharmacyAddress: 'Juhu Tara Road, Mumbai',
-    estimatedArrival: '2:15 PM',
-    image: 'https://images.unsplash.com/photo-1559757175-7cb057fba93c?w=100&h=100&fit=crop'
-  }
-];
-
-const DEMO_ORDER_HISTORY: Order[] = [
-  {
-    id: 'ORD-7612',
-    status: 'completed',
-    medicineName: 'Omeprazole 20mg',
-    genericName: 'Omez',
-    quantity: 30,
-    unit: 'Tablets',
-    pharmacyName: 'Apollo Pharmacy, Andheri West',
-    pharmacyAddress: 'Lokhandwala Complex, Mumbai',
-    date: 'Jan 15, 2026'
-  },
-  {
-    id: 'ORD-6543',
-    status: 'completed',
-    medicineName: 'Amlodipine 5mg',
-    genericName: 'Amlong',
-    quantity: 30,
-    unit: 'Tablets',
-    pharmacyName: 'Noble Chemists, Bandra',
-    pharmacyAddress: 'Hill Road, Bandra West, Mumbai',
-    date: 'Jan 10, 2026'
-  },
-  {
-    id: 'ORD-5234',
-    status: 'cancelled',
-    medicineName: 'Atorvastatin 20mg',
-    genericName: 'Atorva',
-    quantity: 30,
-    unit: 'Tablets',
-    pharmacyName: 'Wellness Forever, Versova',
-    pharmacyAddress: 'Versova Link Road, Mumbai',
-    date: 'Jan 5, 2026'
-  }
-];
-
+// Demo Prescriptions remaining for now
 const DEMO_PRESCRIPTIONS: Prescription[] = [
   {
     id: 'RX-001',
@@ -138,15 +42,21 @@ const DEMO_PRESCRIPTIONS: Prescription[] = [
 ];
 
 // Countdown timer component
-const CountdownTimer = ({ seconds }: { seconds: number }) => {
-  const [timeLeft, setTimeLeft] = useState(seconds);
+const CountdownTimer = ({ expiryTimestamp }: { expiryTimestamp: number }) => {
+  const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+    const calculateTimeLeft = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const remaining = Math.max(0, expiryTimestamp - now);
+      setTimeLeft(remaining);
+    };
+
+    calculateTimeLeft(); // Initial calculation
+    const timer = setInterval(calculateTimeLeft, 1000);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [expiryTimestamp]);
 
   const hours = Math.floor(timeLeft / 3600);
   const minutes = Math.floor((timeLeft % 3600) / 60);
@@ -342,7 +252,7 @@ const OrderCard = ({ order, onCancel, showCancelButton = true }: { order: Order;
           </div>
 
           {order.status === 'reserved' && order.reservationExpiry && (
-            <CountdownTimer seconds={order.reservationExpiry} />
+            <CountdownTimer expiryTimestamp={order.reservationExpiry} />
           )}
 
           {order.status === 'delivery' && order.estimatedArrival && (
@@ -584,8 +494,8 @@ export const Orders = () => {
   const { isSeniorMode, toggleSeniorMode } = useSeniorMode();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('reservations');
-  const [orders, setOrders] = useState(DEMO_ORDERS);
-  const [orderHistory, setOrderHistory] = useState(DEMO_ORDER_HISTORY);
+
+  // Local state for modals/UI only
   const [showPickupModal, setShowPickupModal] = useState<string | null>(null);
   // viewMode is now derived from global context, but we still might want local toggle override?
   // Actually, let's strictly follow the global mode for "senior" view to avoid confusion.
@@ -603,15 +513,7 @@ export const Orders = () => {
 
   // Cancel order handler
   const handleCancelOrder = (orderId: string) => {
-    const orderToCancel = orders.find(o => o.id === orderId);
-    if (orderToCancel) {
-      setOrderHistory(prev => [{
-        ...orderToCancel,
-        status: 'cancelled' as const,
-        date: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
-      }, ...prev]);
-      setOrders(prev => prev.filter(o => o.id !== orderId));
-    }
+    cancelOrder(orderId);
   };
 
   // Get filtered data based on active tab

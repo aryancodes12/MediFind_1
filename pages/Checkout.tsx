@@ -3,17 +3,20 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Banknote, Truck, CheckCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useOrders } from '../context/OrdersContext';
 
 export const Checkout = () => {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const { cartTotal, cartCount, items, clearCart } = useCart();
+  const { addOrder } = useOrders();
 
   const deliveryFee = items.length > 0 ? 40 : 0;
   const finalTotal = cartTotal + deliveryFee;
 
   const handlePlaceOrder = () => {
-    // Simulate order placement
+    // Add items to orders
+    addOrder(items, 'delivery');
     clearCart();
     navigate('/orders');
   };

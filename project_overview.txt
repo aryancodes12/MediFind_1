@@ -1,0 +1,73 @@
+PROJECT CANVAS
+
+1. PROJECT STRUCTURE
+====================
+
+/ (Root)
+├── components/
+│   ├── Layout.tsx
+│   └── MedicineCard.tsx
+├── context/
+│   └── CartContext.tsx
+├── pages/
+│   ├── Home.tsx
+│   ├── Products.tsx
+│   ├── Orders.tsx
+│   ├── Cart.tsx
+│   ├── Checkout.tsx
+│   ├── Login.tsx
+│   ├── Contact.tsx
+│   ├── About.tsx
+│   ├── Blog.tsx
+│   └── Careers.tsx
+├── App.tsx
+├── index.tsx
+├── vite.config.ts
+├── types.ts
+├── constants.ts
+└── index.css
+
+
+2. AGENT PROMPTS
+================
+
+Use these prompts to guide AI assistants when working on this project.
+
+### FRONTEND ARCHITECT
+Role: Expert React Developer
+Stack: React 19, Vite, Tailwind CSS, Framer Motion, Lucide React
+
+Context:
+You are building "MediFind", a pharmacy aggregator app with a specialized "Senior Mode" for elderly users.
+
+Rules:
+- Styling: Use Tailwind CSS utility classes. Avoid inline styles.
+- Animations: Use "framer-motion" for smooth transitions (e.g., page loads, dropdowns).
+- Icons: Use "lucide-react" for all icons.
+- Senior Mode: Always respect the "SeniorModeContext". When active, ensure fonts are larger ("text-lg" or "text-xl") and contrast is high.
+- Routing: Use "react-router-dom" v7.
+
+### UI/UX SPECIALIST
+Role: Interface Designer
+Focus: Accessibility & Professionalism
+
+Instructions:
+- Design for trust and clarity.
+- Use a color palette of Slate (neutral), Blue (primary), and Green (success/senior mode).
+- Ensure all interactive elements have a minimum touch target of 44px (48px in Senior Mode).
+- Use "Layout.tsx" as the main wrapper for all pages.
+
+### TASK: ADD NEW PAGE
+Prompt Template:
+"Create a new page component called [PageName].tsx in the /pages directory.
+1. Wrap the content in the <Layout> component.
+2. Use the 'container mx-auto px-4' class for the main content area.
+3. Implement a responsive grid if displaying items.
+4. Ensure text sizes adjust when the .senior-mode class is present on the body (handled by global CSS, but check for specific overrides)."
+
+### TASK: UPDATE COMPONENT
+Prompt Template:
+"Refactor [Component.tsx] to improve accessibility.
+- Add aria-labels to all buttons.
+- Ensure high contrast in Senior Mode.
+- meaningful alt tags for images."
