@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -607,7 +607,7 @@ export const Orders = () => {
   };
 
   // Get filtered data based on active tab
-  const getFilteredData = () => {
+  const filteredData = useMemo(() => {
     const query = searchQuery.toLowerCase();
 
     switch (activeTab) {
@@ -629,7 +629,7 @@ export const Orders = () => {
       default:
         return [];
     }
-  };
+  }, [activeTab, searchQuery, orders, orderHistory]);
 
   // Senior-friendly view
   if (viewMode === 'senior') {
@@ -945,8 +945,6 @@ export const Orders = () => {
 
   // Full view (original design)
   const renderContent = () => {
-    const filteredData = getFilteredData();
-
     switch (activeTab) {
       case 'reservations':
         return (
