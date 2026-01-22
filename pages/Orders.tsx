@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -593,6 +593,8 @@ export const Orders = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updatesRef = useRef<HTMLDivElement>(null);
 
+  const activeOrders = useMemo(() => orders.filter(o => o.status === 'ready' || o.status === 'reserved' || o.status === 'delivery'), [orders]);
+
   // Cancel order handler
   const handleCancelOrder = (orderId: string) => {
     const orderToCancel = orders.find(o => o.id === orderId);
@@ -633,8 +635,6 @@ export const Orders = () => {
 
   // Senior-friendly view
   if (viewMode === 'senior') {
-    const activeOrders = orders.filter(o => o.status === 'ready' || o.status === 'reserved' || o.status === 'delivery');
-
     return (
       <div className="min-h-screen bg-slate-100">
         {/* Senior Header */}
