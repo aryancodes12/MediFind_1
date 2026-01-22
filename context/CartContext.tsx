@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { Medicine } from '../types';
 
 export interface CartItem extends Medicine {
@@ -18,37 +18,44 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children?: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [itemsMap, setItemsMap] = useState<Map<string, CartItem>>(new Map());
+
+  const items = useMemo(() => Array.from(itemsMap.values()), [itemsMap]);
 
   const addToCart = (medicine: Medicine) => {
-    setItems((prev) => {
-      const existing = prev.find((item) => item.id === medicine.id);
+    setItemsMap((prev) => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(medicine.id);
       if (existing) {
-        return prev.map((item) =>
-          item.id === medicine.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
+        newMap.set(medicine.id, { ...existing, quantity: existing.quantity + 1 });
+      } else {
+        newMap.set(medicine.id, { ...medicine, quantity: 1 });
       }
-      return [...prev, { ...medicine, quantity: 1 }];
+      return newMap;
     });
   };
 
   const removeFromCart = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItemsMap((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(id);
+      return newMap;
+    });
   };
 
   const updateQuantity = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const newQuantity = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      })
-    );
+    setItemsMap((prev) => {
+      const existing = prev.get(id);
+      if (!existing) return prev;
+
+      const newMap = new Map(prev);
+      const newQuantity = Math.max(1, existing.quantity + delta);
+      newMap.set(id, { ...existing, quantity: newQuantity });
+      return newMap;
+    });
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = () => setItemsMap(new Map());
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
